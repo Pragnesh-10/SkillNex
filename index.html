@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,42 +9,63 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Custom Scrollbar for Modal */
-        .modal-content::-webkit-scrollbar { width: 8px; }
-        .modal-content::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        /* Brand Colors */
+        .text-brand-dark { color: #0B2545; }
+        .bg-brand-dark { background-color: #0B2545; }
+        .text-brand-teal { color: #5EBEC4; }
+        .bg-brand-teal { background-color: #5EBEC4; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        .slide-up { animation: slideUp 0.6s ease-out; }
+        .logo-hover:hover { transform: scale(1.05); transition: transform 0.3s ease; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Modal Scroll */
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-track { background: #f1f1f1; }
         .modal-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .modal-content::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
 
-    <!-- App Container -->
     <div id="app"></div>
-
-    <!-- Modals Container -->
     <div id="modal-container"></div>
+    <!-- Ad Container -->
+    <div id="ad-container"></div>
 
     <script>
-        // --- Mock Data ---
+        // --- 1. SVG Logo ---
+        const LOGO_SVG = `
+        <svg viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+            <path d="M20 15 H80 C88 15 92 20 92 28 V55 C92 80 50 100 50 100 C50 100 8 80 8 55 V28 C8 20 12 15 20 15Z" stroke="#0B2545" stroke-width="8" fill="white"/>
+            <path d="M30 45 L48 28 L72 48" stroke="#0B2545" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M72 48 L60 65" stroke="#0B2545" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="48" cy="28" r="5" fill="#5EBEC4" stroke="none"/>
+            <circle cx="30" cy="45" r="5" fill="#5EBEC4" stroke="none"/>
+            <path d="M55 75 Q 60 82 70 75" stroke="#0B2545" stroke-width="7" stroke-linecap="round" fill="none"/>
+        </svg>`;
+
+        // --- 2. Mock Data ---
         const COURSES = [
-            { id: 1, platform: 'Coursera', title: 'Google Data Analytics Professional Certificate', instructor: 'Google Career Certificates', rating: 4.8, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', tags: ['Data Science', 'Beginner'] },
-            { id: 2, platform: 'Udemy', title: 'The Complete 2024 Web Development Bootcamp', instructor: 'Dr. Angela Yu', rating: 4.9, image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80', tags: ['Web Dev', 'Full Stack'] },
-            { id: 3, platform: 'Udacity', title: 'Artificial Intelligence for Trading', instructor: 'Udacity Team', rating: 4.7, image: 'https://images.unsplash.com/photo-1611974765270-ca12588265b6?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Finance'] },
-            { id: 4, platform: 'Coursera', title: 'Machine Learning Specialization', instructor: 'Andrew Ng', rating: 4.9, image: 'https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Advanced'] }
+            { id: 1, platform: 'Coursera', title: 'Google Data Analytics', instructor: 'Google', rating: 4.8, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', tags: ['Data', 'Beginner'] },
+            { id: 2, platform: 'Udemy', title: 'Web Development Bootcamp', instructor: 'Angela Yu', rating: 4.9, image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80', tags: ['Web', 'Full Stack'] },
+            { id: 3, platform: 'Udacity', title: 'AI for Trading', instructor: 'Udacity', rating: 4.7, image: 'https://images.unsplash.com/photo-1611974765270-ca12588265b6?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Finance'] },
+            { id: 4, platform: 'Coursera', title: 'Machine Learning', instructor: 'Andrew Ng', rating: 4.9, image: 'https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Advanced'] }
         ];
 
         const EXPERTS = [
-            { id: 1, name: 'Sarah Chen', role: 'Senior Product Manager', company: 'Google', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80', available: true },
+            { id: 1, name: 'Sarah Chen', role: 'Product Manager', company: 'Google', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80', available: true },
             { id: 2, name: 'David Miller', role: 'Staff Engineer', company: 'Netflix', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80', available: true },
             { id: 3, name: 'Elena Rodriguez', role: 'Data Scientist', company: 'Spotify', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80', available: true }
         ];
@@ -54,34 +74,81 @@
             { id: 1, text: "Do you like maths & logic?", icon: "fa-calculator" },
             { id: 2, text: "Do you enjoy leading a team?", icon: "fa-users" },
             { id: 3, text: "Do you like building apps/websites?", icon: "fa-laptop-code" },
-            { id: 4, text: "Do you like collecting & analyzing data?", icon: "fa-chart-pie" },
-            { id: 5, text: "Do you enjoy solving complex puzzles?", icon: "fa-puzzle-piece" },
-            { id: 6, text: "Do you like creating visual art/designs?", icon: "fa-palette" },
-            { id: 7, text: "Are you comfortable speaking in public?", icon: "fa-microphone-alt" },
-            { id: 8, text: "Do you prefer working independently?", icon: "fa-coffee" },
+            { id: 4, text: "Do you like collecting data?", icon: "fa-chart-pie" },
+            { id: 5, text: "Do you enjoy complex puzzles?", icon: "fa-puzzle-piece" },
+            { id: 6, text: "Do you like visual design?", icon: "fa-palette" },
+            { id: 7, text: "Are you comfortable speaking?", icon: "fa-microphone-alt" },
+            { id: 8, text: "Do you prefer independent work?", icon: "fa-coffee" }
         ];
 
-        // --- State Management ---
+        // --- 3. Mock Ads Data ---
+        const ADS = [
+            { title: "Special Offer!", desc: "Get 50% off on all coding bootcamps today.", color: "bg-blue-600" },
+            { title: "Learn Python Fast", desc: "The ultimate guide to Python in 2024.", color: "bg-green-600" },
+            { title: "Hire Top Talent", desc: "Find the best developers for your team.", color: "bg-purple-600" },
+            { title: "Cloud Hosting Sale", desc: "Host your website for just $1/month.", color: "bg-orange-600" }
+        ];
+
+        // --- 4. State Management ---
         let state = {
+            introShown: false,
             surveyCompleted: false,
             surveyStep: 0,
-            view: 'dashboard', // dashboard, experts, subscription, progress
+            view: 'dashboard',
             isPremium: false,
-            planType: null, // 'monthly', 'yearly'
+            planType: null,
             isMenuOpen: false,
-            selectedExpert: null
+            selectedExpert: null,
+            modals: { premium: false, schedule: false },
+            showAd: false,
+            adTimerId: null
         };
 
-        // --- Core Render Logic ---
-        
+        // --- 5. Logic & Initialization ---
         function init() {
             renderApp();
         }
 
+        // --- Ad Logic ---
+        function startAdLoop() {
+            // Clear any existing timer first
+            if (state.adTimerId) clearInterval(state.adTimerId);
+
+            // Only start if not premium
+            if (!state.isPremium) {
+                console.log("Starting Ad Loop (Every 3 seconds)");
+                state.adTimerId = setInterval(() => {
+                    // Only show ad if one isn't already open and no other modal is open
+                    if (!state.showAd && !state.modals.premium && !state.modals.schedule && !state.isPremium) {
+                        state.showAd = true;
+                        renderAds();
+                    }
+                }, 3000); // 3000ms = 3 seconds
+            }
+        }
+
+        function stopAdLoop() {
+            if (state.adTimerId) {
+                clearInterval(state.adTimerId);
+                state.adTimerId = null;
+            }
+            state.showAd = false;
+            renderAds(); // Clears the ad
+        }
+
+        function closeAd() {
+            state.showAd = false;
+            renderAds();
+        }
+
+        // --- Render Functions ---
+
         function renderApp() {
             const app = document.getElementById('app');
             
-            if (!state.surveyCompleted) {
+            if (!state.introShown) {
+                app.innerHTML = renderIntro();
+            } else if (!state.surveyCompleted) {
                 app.innerHTML = renderSurvey();
             } else {
                 app.innerHTML = `
@@ -91,55 +158,97 @@
                     </main>
                 `;
             }
-            renderModals(); // Check if any modals need to be injected
+            renderModals();
+            renderAds();
         }
 
-        // --- View Generators ---
+        function renderAds() {
+            const adContainer = document.getElementById('ad-container');
+            
+            if (state.showAd && !state.isPremium) {
+                // Pick a random ad
+                const randomAd = ADS[Math.floor(Math.random() * ADS.length)];
+                
+                adContainer.innerHTML = `
+                    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in">
+                        <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+                            <!-- Ad Header -->
+                            <div class="${randomAd.color} p-4 text-white text-center">
+                                <p class="text-xs uppercase font-bold tracking-widest opacity-80 mb-1">Advertisement</p>
+                                <h3 class="text-2xl font-bold">${randomAd.title}</h3>
+                            </div>
+                            
+                            <!-- Ad Body -->
+                            <div class="p-8 text-center">
+                                <p class="text-gray-600 mb-6 text-lg">${randomAd.desc}</p>
+                                
+                                <button class="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mb-3 hover:bg-gray-800">
+                                    Click Here
+                                </button>
+                                
+                                <div class="text-xs text-gray-400 mb-4">or</div>
+
+                                <button onclick="closeAd()" class="text-gray-500 font-medium hover:text-gray-800 underline">
+                                    Close Ad
+                                </button>
+                            </div>
+                            
+                            <!-- Premium Pitch -->
+                            <div class="bg-gray-50 p-3 text-center border-t border-gray-100">
+                                <p class="text-xs text-gray-500">Tired of ads? <button onclick="closeAd(); handleConnect(null)" class="text-brand-dark font-bold hover:underline">Go Premium</button></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                adContainer.innerHTML = '';
+            }
+        }
+
+        function renderIntro() {
+            return `
+            <div class="min-h-screen bg-white flex flex-col fade-in">
+                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">
+                    <div class="w-32 h-32 mb-6 logo-hover">${LOGO_SVG}</div>
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-brand-dark mb-6 tracking-tight leading-tight slide-up">SkillNex</h1>
+                    <p class="text-lg text-gray-500 mb-10 leading-relaxed slide-up" style="animation-delay: 0.1s">Discover your ideal career path, learn from top providers, and connect with industry leaders.</p>
+                    <div class="grid gap-4 w-full mb-12 text-left slide-up" style="animation-delay: 0.2s">
+                        <div class="flex items-center p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-dark shadow-sm mr-4 shrink-0"><i class="fas fa-compass"></i></div>
+                            <div><h3 class="font-bold text-gray-900">Personalized Path</h3><p class="text-xs text-gray-600">Tailored course recommendations</p></div>
+                        </div>
+                        <div class="flex items-center p-4 bg-teal-50 rounded-2xl border border-teal-100">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-teal shadow-sm mr-4 shrink-0"><i class="fas fa-users"></i></div>
+                            <div><h3 class="font-bold text-gray-900">Expert Mentorship</h3><p class="text-xs text-gray-600">1-on-1 sessions with pros</p></div>
+                        </div>
+                    </div>
+                    <button onclick="startApp()" class="w-full py-4 bg-brand-dark text-white rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 slide-up" style="animation-delay: 0.3s">Get Started <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>`;
+        }
 
         function renderSurvey() {
             const question = SURVEY_QUESTIONS[state.surveyStep];
             const progress = ((state.surveyStep + 1) / SURVEY_QUESTIONS.length) * 100;
-
             return `
-            <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center p-4">
+            <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center p-4 fade-in">
                 <div class="bg-white max-w-lg w-full rounded-2xl shadow-xl p-8 relative overflow-hidden">
-                    <!-- Progress Bar -->
-                    <div class="absolute top-0 left-0 w-full h-2 bg-gray-100">
-                        <div class="h-full bg-indigo-600 transition-all duration-500 ease-out" style="width: ${progress}%"></div>
-                    </div>
-
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gray-100"><div class="h-full bg-brand-dark transition-all duration-500 ease-out" style="width: ${progress}%"></div></div>
                     <div class="mt-6 text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 mb-6">
-                            <span class="text-2xl font-bold">${state.surveyStep + 1}</span>
-                        </div>
-                        
-                        <div class="flex justify-center text-indigo-500 mb-4">
-                            <i class="fas ${question.icon} text-4xl"></i>
-                        </div>
-
-                        <h2 class="text-2xl font-bold text-gray-900 mb-8 min-h-[64px] flex items-center justify-center">
-                            ${question.text}
-                        </h2>
-
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 text-brand-dark mb-6"><span class="text-2xl font-bold">${state.surveyStep + 1}</span></div>
+                        <div class="flex justify-center text-brand-teal mb-4"><i class="fas ${question.icon} text-4xl"></i></div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-8 min-h-[64px] flex items-center justify-center">${question.text}</h2>
                         <div class="grid grid-cols-2 gap-4">
                             <button onclick="handleSurveyAnswer(true)" class="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-gray-100 hover:border-green-500 hover:bg-green-50 transition-all group">
-                                <i class="fas fa-thumbs-up text-2xl text-gray-400 group-hover:text-green-500 mb-2 transition-colors"></i>
-                                <span class="font-bold text-gray-700 group-hover:text-green-700">Yes, I do</span>
+                                <i class="fas fa-thumbs-up text-2xl text-gray-400 group-hover:text-green-500 mb-2 transition-colors"></i><span class="font-bold text-gray-700 group-hover:text-green-700">Yes</span>
                             </button>
-
                             <button onclick="handleSurveyAnswer(false)" class="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-gray-100 hover:border-red-500 hover:bg-red-50 transition-all group">
-                                <i class="fas fa-thumbs-down text-2xl text-gray-400 group-hover:text-red-500 mb-2 transition-colors"></i>
-                                <span class="font-bold text-gray-700 group-hover:text-red-700">No, not really</span>
+                                <i class="fas fa-thumbs-down text-2xl text-gray-400 group-hover:text-red-500 mb-2 transition-colors"></i><span class="font-bold text-gray-700 group-hover:text-red-700">No</span>
                             </button>
-                        </div>
-                        
-                        <div class="mt-8 text-sm text-gray-400">
-                            Question ${state.surveyStep + 1} of ${SURVEY_QUESTIONS.length}
                         </div>
                     </div>
                 </div>
-            </div>
-            `;
+            </div>`;
         }
 
         function renderNavbar() {
@@ -148,57 +257,33 @@
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16 items-center">
                         <div class="flex items-center gap-2 cursor-pointer" onclick="setView('dashboard')">
-                            <div class="bg-indigo-600 p-2 rounded-lg text-white w-9 h-9 flex items-center justify-center">
-                                <i class="fas fa-book-open"></i>
-                            </div>
-                            <span class="text-xl font-bold tracking-tight text-gray-900">Skill<span class="text-indigo-600">Nex</span></span>
+                            <div class="w-8 h-8">${LOGO_SVG}</div><span class="text-xl font-bold tracking-tight text-brand-dark">SkillNex</span>
                         </div>
-
                         <div class="relative">
                             <button onclick="toggleMenu()" class="flex items-center gap-2 p-1 pr-3 rounded-full border border-gray-200 hover:shadow-md transition-all">
-                                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" alt="User" class="w-8 h-8 rounded-full object-cover" />
-                                <div class="hidden md:block text-left">
-                                    <p class="text-xs font-bold text-gray-700">Alex Doe</p>
-                                    <p class="text-[10px] font-medium text-indigo-600 uppercase">
-                                        ${state.isPremium ? (state.planType === 'yearly' ? 'Premium (Annual)' : 'Premium (Monthly)') : 'Free Plan'}
-                                    </p>
-                                </div>
+                                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" class="w-8 h-8 rounded-full object-cover" />
+                                <div class="hidden md:block text-left"><p class="text-xs font-bold text-gray-700">Alex Doe</p><p class="text-[10px] font-medium text-brand-teal uppercase">${state.isPremium ? 'Premium' : 'Free Plan'}</p></div>
                                 <i class="fas fa-bars text-gray-500 ml-1"></i>
                             </button>
-
                             ${state.isMenuOpen ? `
                                 <div class="fixed inset-0 z-30" onclick="toggleMenu()"></div>
                                 <div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-40">
-                                    <div class="px-4 py-3 border-b border-gray-100 mb-1 md:hidden">
-                                        <p class="font-bold text-gray-900">Alex Doe</p>
-                                        <p class="text-xs text-gray-500">${state.isPremium ? 'Premium' : 'Free'}</p>
-                                    </div>
-                                    ${renderMenuItem('fa-book-reader', 'My Learning Progress', 'progress')}
-                                    ${renderMenuItem('fa-users', 'Connect with Experts', 'experts')}
+                                    ${renderMenuItem('fa-book-reader', 'My Progress', 'progress')}
+                                    ${renderMenuItem('fa-users', 'Experts', 'experts')}
                                     ${renderMenuItem('fa-credit-card', 'Subscription', 'subscription')}
-                                    <button onclick="alert('Referral Link Copied!'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                        <i class="fas fa-share-alt w-6 opacity-70"></i> Refer Now
-                                    </button>
+                                    <button onclick="alert('Copied!'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"><i class="fas fa-share-alt w-6 opacity-70"></i> Refer Now</button>
                                     <div class="h-px bg-gray-100 my-2"></div>
-                                    <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50">
-                                        <i class="fas fa-sign-out-alt w-6 opacity-70"></i> Log Out
-                                    </button>
+                                    <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-6 opacity-70"></i> Log Out</button>
                                 </div>
                             ` : ''}
                         </div>
                     </div>
                 </div>
-            </nav>
-            `;
+            </nav>`;
         }
 
         function renderMenuItem(icon, label, viewName) {
-            const active = state.view === viewName;
-            return `
-                <button onclick="setView('${viewName}'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium transition-colors ${active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-50'}">
-                    <i class="fas ${icon} w-6 opacity-70"></i> ${label}
-                </button>
-            `;
+            return `<button onclick="setView('${viewName}'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium transition-colors ${state.view === viewName ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-50'}"><i class="fas ${icon} w-6 opacity-70"></i> ${label}</button>`;
         }
 
         function renderCurrentView() {
@@ -213,316 +298,107 @@
 
         function renderDashboard() {
             return `
-                <div class="flex justify-between items-end mb-6">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Recommended for You</h1>
-                        <p class="text-gray-500 mt-1">Based on your survey results</p>
-                    </div>
-                    <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hidden sm:block">View All Recommendations</button>
-                </div>
-                
+                <div class="flex justify-between items-end mb-6"><div><h1 class="text-3xl font-bold text-gray-900">Recommended for You</h1><p class="text-gray-500 mt-1">Based on your survey results</p></div></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     ${COURSES.map(course => `
                         <div class="bg-white group rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer">
-                            <div class="relative h-48 overflow-hidden">
-                                <img src="${course.image}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-indigo-800 uppercase tracking-wide shadow-sm">
-                                    ${course.platform}
-                                </div>
-                            </div>
+                            <div class="relative h-48 overflow-hidden"><img src="${course.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /><div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-dark uppercase tracking-wide shadow-sm">${course.platform}</div></div>
                             <div class="p-5">
-                                <div class="flex gap-2 mb-3">
-                                    ${course.tags.map(tag => `<span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">${tag}</span>`).join('')}
-                                </div>
+                                <div class="flex gap-2 mb-3">${course.tags.map(tag => `<span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">${tag}</span>`).join('')}</div>
                                 <h3 class="font-bold text-gray-900 mb-2 line-clamp-2 h-12">${course.title}</h3>
                                 <p class="text-sm text-gray-600 mb-4">${course.instructor}</p>
-                                <div class="flex items-center justify-between pt-4 border-t border-gray-50">
-                                    <div class="flex items-center text-amber-400 text-sm font-bold">
-                                        <i class="fas fa-star mr-1"></i> ${course.rating}
-                                    </div>
-                                    <button class="text-indigo-600 text-sm font-medium hover:text-indigo-800 flex items-center gap-1">
-                                        View <i class="fas fa-play-circle"></i>
-                                    </button>
-                                </div>
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-50"><div class="flex items-center text-amber-400 text-sm font-bold"><i class="fas fa-star mr-1"></i> ${course.rating}</div><button class="text-brand-dark text-sm font-medium hover:text-brand-teal flex items-center gap-1">View <i class="fas fa-play-circle"></i></button></div>
                             </div>
-                        </div>
-                    `).join('')}
+                        </div>`).join('')}
                 </div>
-
-                <div class="mt-12 bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl p-8 text-white relative overflow-hidden">
-                    <div class="relative z-10 max-w-2xl">
-                        <h2 class="text-2xl font-bold mb-2">Accelerate your career with SkillNex</h2>
-                        <p class="text-indigo-100 mb-6">Get 1-on-1 guidance from experts at Google, Netflix, and more.</p>
-                        <button onclick="setView('experts')" class="bg-white text-indigo-700 px-6 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-50 transition-colors">Find a Mentor</button>
-                    </div>
-                    <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform translate-x-12"></div>
-                </div>
-            `;
+                <div class="mt-12 bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl p-8 text-white relative overflow-hidden">
+                    <div class="relative z-10 max-w-2xl"><h2 class="text-2xl font-bold mb-2">Accelerate your career with SkillNex</h2><p class="text-gray-300 mb-6">Get 1-on-1 guidance from experts.</p><button onclick="setView('experts')" class="bg-white text-brand-dark px-6 py-2 rounded-lg font-medium shadow-sm hover:bg-gray-100 transition-colors">Find a Mentor</button></div>
+                </div>`;
         }
 
         function renderExperts() {
             return `
-                <div class="text-center max-w-2xl mx-auto mb-10">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-3">Industry Experts</h2>
-                    <p class="text-gray-500">Book 1-on-1 sessions to get code reviews, career advice, and interview prep.</p>
-                </div>
-
+                <div class="text-center max-w-2xl mx-auto mb-10"><h2 class="text-3xl font-bold text-gray-900 mb-3">Industry Experts</h2><p class="text-gray-500">Book 1-on-1 sessions to get code reviews, career advice, and interview prep.</p></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     ${EXPERTS.map(expert => `
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow">
-                            <div class="relative mb-4">
-                                <img src="${expert.image}" alt="${expert.name}" class="w-24 h-24 rounded-full object-cover border-4 border-indigo-50" />
-                                ${expert.available ? '<div class="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" title="Available now"></div>' : ''}
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-900">${expert.name}</h3>
-                            <p class="text-indigo-600 font-medium mb-1">${expert.role}</p>
-                            <p class="text-gray-500 text-sm mb-6">${expert.company}</p>
-                            
-                            <button onclick="handleConnect(${expert.id})" class="w-full px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${state.isPremium ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}">
-                                ${state.isPremium ? '<i class="fas fa-calendar-alt"></i> Schedule Meeting' : '<i class="fas fa-lock"></i> Connect'}
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+                            <div class="relative mb-4"><img src="${expert.image}" class="w-24 h-24 rounded-full object-cover border-4 border-gray-100" />${expert.available ? '<div class="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>' : ''}</div>
+                            <h3 class="text-xl font-bold text-gray-900">${expert.name}</h3><p class="text-brand-teal font-medium mb-1">${expert.role}</p><p class="text-gray-500 text-sm mb-6">${expert.company}</p>
+                            <button onclick="handleConnect(${expert.id})" class="w-full px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${state.isPremium ? 'bg-brand-dark text-white hover:opacity-90 shadow-md' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}">${state.isPremium ? '<i class="fas fa-calendar-alt"></i> Schedule' : '<i class="fas fa-lock"></i> Connect'}</button>
+                        </div>`).join('')}
+                </div>`;
         }
 
         function renderSubscription() {
             return `
                 <div class="max-w-6xl mx-auto">
-                    <div class="text-center mb-10">
-                        <h2 class="text-3xl font-bold text-gray-900">Choose Your Plan</h2>
-                        <p class="text-gray-500 mt-2">Invest in your future with SkillNex Premium</p>
-                    </div>
-
+                    <div class="text-center mb-10"><h2 class="text-3xl font-bold text-gray-900">Choose Your Plan</h2><p class="text-gray-500 mt-2">Invest in your future with SkillNex Premium</p></div>
                     <div class="grid md:grid-cols-3 gap-6 items-start">
-                        <!-- Free Plan -->
                         <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                            <h3 class="text-xl font-bold text-gray-900">Free Plan</h3>
-                            <p class="text-3xl font-bold mt-4 mb-6">₹0</p>
-                            <ul class="space-y-3 mb-8">
-                                <li class="flex items-center text-gray-600 text-sm"><i class="fas fa-check-circle text-gray-400 mr-2"></i> Access to basic courses</li>
-                                <li class="flex items-center text-gray-600 text-sm"><i class="fas fa-check-circle text-gray-400 mr-2"></i> Community forum access</li>
-                                <li class="flex items-center text-gray-600 text-sm"><i class="fas fa-check-circle text-gray-400 mr-2"></i> Limited course previews</li>
-                            </ul>
-                            <button class="w-full px-4 py-2 rounded-lg font-medium border-2 border-indigo-600 text-indigo-600 opacity-50 cursor-not-allowed">Current Plan</button>
+                            <h3 class="text-xl font-bold text-gray-900">Free Plan</h3><p class="text-3xl font-bold mt-4 mb-6">₹0</p>
+                            <button class="w-full px-4 py-2 rounded-lg font-medium border-2 border-gray-300 text-gray-400 opacity-50 cursor-not-allowed">Current Plan</button>
                         </div>
-
-                        <!-- Monthly -->
-                        <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md hover:shadow-lg transition-all">
-                            <h3 class="text-xl font-bold text-indigo-600">Monthly Plan</h3>
-                            <p class="text-3xl font-bold mt-4 mb-6">₹99<span class="text-base font-normal text-gray-500">/mo</span></p>
-                            <ul class="space-y-3 mb-8">
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-check-circle text-indigo-500 mr-2"></i> Connect with industry experts</li>
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-check-circle text-indigo-500 mr-2"></i> Ad-free experience</li>
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-check-circle text-indigo-500 mr-2"></i> Mock interviews</li>
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-check-circle text-indigo-500 mr-2"></i> Resume & LinkedIn reviews</li>
-                            </ul>
-                            <button onclick="upgrade('monthly')" ${state.isPremium && state.planType === 'monthly' ? 'disabled' : ''} class="w-full px-4 py-2 rounded-lg font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-md ${state.isPremium && state.planType === 'monthly' ? 'opacity-50 cursor-not-allowed' : ''}">
-                                ${state.isPremium && state.planType === 'monthly' ? 'Active Plan' : 'Subscribe Monthly'}
-                            </button>
+                        <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md">
+                            <h3 class="text-xl font-bold text-brand-dark">Monthly Plan</h3><p class="text-3xl font-bold mt-4 mb-6">₹99/mo</p>
+                            <button onclick="upgrade('monthly')" ${state.isPremium && state.planType === 'monthly' ? 'disabled' : ''} class="w-full px-4 py-2 rounded-lg font-medium bg-brand-dark text-white hover:opacity-90 shadow-md ${state.isPremium && state.planType === 'monthly' ? 'opacity-50' : ''}">${state.isPremium && state.planType === 'monthly' ? 'Active Plan' : 'Subscribe Monthly'}</button>
                         </div>
-
-                        <!-- Annual -->
-                        <div class="bg-white p-6 rounded-2xl border-2 border-amber-400 shadow-xl relative transform md:-translate-y-2">
-                            <div class="absolute top-0 right-0 bg-amber-400 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg uppercase tracking-wide">Best Value</div>
-                            <h3 class="text-xl font-bold text-gray-900">Annual Plan</h3>
-                            <p class="text-3xl font-bold mt-4 mb-1">₹1099<span class="text-base font-normal text-gray-500">/yr</span></p>
-                            <p class="text-xs text-green-600 font-bold mb-5">Save ~₹89/year</p>
-                            
-                            <ul class="space-y-3 mb-8">
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-star text-amber-400 mr-2"></i> All Monthly Features</li>
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-star text-amber-400 mr-2"></i> Unlimited Mock interviews</li>
-                                <li class="flex items-center text-gray-800 font-medium text-sm"><i class="fas fa-star text-amber-400 mr-2"></i> Priority Resume reviews</li>
-                            </ul>
-                            <button onclick="upgrade('yearly')" ${state.isPremium && state.planType === 'yearly' ? 'disabled' : ''} class="w-full px-4 py-3 rounded-lg font-medium bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${state.isPremium && state.planType === 'yearly' ? 'opacity-50 cursor-not-allowed' : ''}">
-                                ${state.isPremium && state.planType === 'yearly' ? 'Active Plan' : 'Subscribe Annually'}
-                            </button>
+                        <div class="bg-white p-6 rounded-2xl border-2 border-brand-teal shadow-xl relative md:-translate-y-2">
+                            <div class="absolute top-0 right-0 bg-brand-teal text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">BEST VALUE</div>
+                            <h3 class="text-xl font-bold text-gray-900">Annual Plan</h3><p class="text-3xl font-bold mt-4 mb-1">₹1099/yr</p>
+                            <button onclick="upgrade('yearly')" ${state.isPremium && state.planType === 'yearly' ? 'disabled' : ''} class="w-full px-4 py-3 rounded-lg font-medium bg-gradient-to-r from-brand-teal to-teal-400 text-white shadow-md ${state.isPremium && state.planType === 'yearly' ? 'opacity-50' : ''}">${state.isPremium && state.planType === 'yearly' ? 'Active Plan' : 'Subscribe Annually'}</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function renderProgress() {
-            return `
-                <div class="max-w-3xl mx-auto">
-                    <h2 class="text-2xl font-bold mb-6">My Learning Progress</h2>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg">Web Development Bootcamp</h3>
-                                <p class="text-sm text-gray-500">Udemy • Angela Yu</p>
-                            </div>
-                            <span class="font-bold text-indigo-600 text-xl">75%</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-3">
-                            <div class="bg-indigo-600 h-3 rounded-full" style="width: 75%"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 opacity-75">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg">Data Analytics Certificate</h3>
-                                <p class="text-sm text-gray-500">Coursera • Google</p>
-                            </div>
-                            <span class="font-bold text-gray-600 text-xl">12%</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-3">
-                            <div class="bg-orange-400 h-3 rounded-full" style="width: 12%"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            return `<div class="max-w-3xl mx-auto"><h2 class="text-2xl font-bold mb-6">My Learning Progress</h2><div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"><div class="flex justify-between items-center mb-4"><div><h3 class="font-bold text-lg">Web Dev</h3><p class="text-sm text-gray-500">Udemy</p></div><span class="font-bold text-brand-dark text-xl">75%</span></div><div class="w-full bg-gray-100 rounded-full h-3"><div class="bg-brand-dark h-3 rounded-full" style="width: 75%"></div></div></div></div>`;
         }
 
         function renderModals() {
-            const modalContainer = document.getElementById('modal-container');
-            modalContainer.innerHTML = ''; // Clear
-
+            const mc = document.getElementById('modal-container');
             if (state.modals.premium) {
-                modalContainer.innerHTML = `
-                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 fade-in">
-                        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto modal-content">
-                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
-                                <h3 class="font-bold text-gray-800">Unlock Premium Access</h3>
-                                <button onclick="closeModals()" class="p-1 hover:bg-gray-200 rounded-full text-gray-500"><i class="fas fa-times"></i></button>
-                            </div>
-                            <div class="p-6 text-center">
-                                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="fas fa-award text-3xl"></i>
-                                </div>
-                                <h4 class="text-xl font-bold text-gray-900 mb-2">Connect with Industry Leaders</h4>
-                                <p class="text-gray-600 mb-6 text-sm">Unlock advanced features to fast-track your career with SkillNex Premium.</p>
-                                
-                                <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left space-y-3">
-                                    <div class="flex items-center text-gray-700 text-sm font-medium"><i class="fas fa-users text-indigo-500 mr-3"></i> Connect with Experts</div>
-                                    <div class="flex items-center text-gray-700 text-sm font-medium"><i class="fas fa-play-circle text-indigo-500 mr-3"></i> Ad-free Experience</div>
-                                    <div class="flex items-center text-gray-700 text-sm font-medium"><i class="fas fa-briefcase text-indigo-500 mr-3"></i> Mock Interviews</div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-3 mb-4">
-                                    <button onclick="upgrade('monthly')" class="border-2 border-indigo-100 hover:border-indigo-500 rounded-xl p-3 text-center transition-all">
-                                        <div class="text-xs text-gray-500 uppercase font-bold">Monthly</div>
-                                        <div class="text-lg font-bold text-indigo-600">₹99</div>
-                                    </button>
-                                    <button onclick="upgrade('yearly')" class="relative border-2 border-amber-200 bg-amber-50 hover:border-amber-500 rounded-xl p-3 text-center transition-all">
-                                        <div class="absolute -top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">SAVE</div>
-                                        <div class="text-xs text-gray-500 uppercase font-bold">Annually</div>
-                                        <div class="text-lg font-bold text-indigo-600">₹1099</div>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (state.modals.schedule && state.selectedExpert) {
-                modalContainer.innerHTML = `
-                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 fade-in">
-                        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
-                                <h3 class="font-bold text-gray-800">Book a Session</h3>
-                                <button onclick="closeModals()" class="p-1 hover:bg-gray-200 rounded-full text-gray-500"><i class="fas fa-times"></i></button>
-                            </div>
-                            <div class="p-6 text-center">
-                                <img src="${state.selectedExpert.image}" alt="" class="w-16 h-16 rounded-full mx-auto mb-3" />
-                                <h4 class="text-lg font-bold mb-1">Meet with ${state.selectedExpert.name}</h4>
-                                <p class="text-sm text-gray-500 mb-6">${state.selectedExpert.role} at ${state.selectedExpert.company}</p>
-                                
-                                <div class="grid grid-cols-3 gap-2 mb-6">
-                                    <button class="p-2 border rounded-lg text-sm hover:border-indigo-500 hover:bg-indigo-50 focus:ring-2 ring-indigo-500 focus:outline-none">10:00 AM</button>
-                                    <button class="p-2 border rounded-lg text-sm hover:border-indigo-500 hover:bg-indigo-50 focus:ring-2 ring-indigo-500 focus:outline-none">02:00 PM</button>
-                                    <button class="p-2 border rounded-lg text-sm hover:border-indigo-500 hover:bg-indigo-50 focus:ring-2 ring-indigo-500 focus:outline-none">04:30 PM</button>
-                                </div>
-                                
-                                <button onclick="confirmBooking()" class="w-full px-4 py-2 rounded-lg font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
-                                    Confirm Booking
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                mc.innerHTML = `<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 fade-in"><div class="bg-white rounded-2xl p-6 text-center max-w-sm"><i class="fas fa-award text-3xl text-amber-500 mb-4"></i><h4 class="text-xl font-bold mb-2">Go Premium</h4><p class="mb-6 text-gray-500">Remove ads & unlock experts.</p><div class="grid grid-cols-2 gap-3"><button onclick="upgrade('monthly')" class="border p-3 rounded-xl font-bold">Monthly ₹99</button><button onclick="upgrade('yearly')" class="bg-brand-teal text-white p-3 rounded-xl font-bold">Yearly ₹1099</button></div><button onclick="closeModals()" class="mt-4 text-gray-400">Close</button></div></div>`;
+            } else if (state.modals.schedule && state.selectedExpert) {
+                mc.innerHTML = `<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 fade-in"><div class="bg-white rounded-2xl p-6 text-center max-w-sm"><h4 class="text-xl font-bold mb-4">Book Session</h4><button onclick="confirmBooking()" class="w-full bg-brand-dark text-white py-2 rounded-lg">Confirm</button><button onclick="closeModals()" class="mt-4 text-gray-400">Cancel</button></div></div>`;
+            } else {
+                mc.innerHTML = '';
             }
         }
 
-        // --- Actions & Event Handlers ---
-
-        window.handleSurveyAnswer = function(answer) {
-            if (state.surveyStep < SURVEY_QUESTIONS.length - 1) {
-                state.surveyStep++;
-                renderApp();
-            } else {
-                state.surveyCompleted = true;
-                state.view = 'dashboard';
-                renderApp();
+        // --- Actions ---
+        window.startApp = function() { state.introShown = true; renderApp(); };
+        window.handleSurveyAnswer = function(ans) {
+            if (state.surveyStep < SURVEY_QUESTIONS.length - 1) { state.surveyStep++; renderApp(); } 
+            else { 
+                state.surveyCompleted = true; 
+                state.view = 'dashboard'; 
+                renderApp(); 
+                startAdLoop(); // START ADS FOR FREE USER
             }
         };
-
-        window.setView = function(viewName) {
-            state.view = viewName;
-            state.isMenuOpen = false; // Close menu on nav
-            renderApp();
+        window.setView = function(v) { state.view = v; state.isMenuOpen = false; renderApp(); };
+        window.toggleMenu = function() { state.isMenuOpen = !state.isMenuOpen; renderApp(); };
+        window.handleConnect = function(id) { 
+            if (id === null) { state.modals.premium = true; renderModals(); return; } // Called from Ad
+            const exp = EXPERTS.find(e => e.id === id); 
+            if (state.isPremium) { state.selectedExpert = exp; state.modals.schedule = true; } else { state.modals.premium = true; } 
+            renderModals(); 
         };
-
-        window.toggleMenu = function() {
-            state.isMenuOpen = !state.isMenuOpen;
-            renderApp();
+        window.upgrade = function(p) { 
+            state.planType = p; state.isPremium = true; state.modals.premium = false; 
+            stopAdLoop(); // STOP ADS
+            alert('Premium Active! Ads removed.'); 
+            renderApp(); 
         };
+        window.confirmBooking = function() { alert('Booked!'); closeModals(); };
+        window.closeModals = function() { state.modals.premium = false; state.modals.schedule = false; renderModals(); };
+        window.closeAd = function() { state.showAd = false; renderAds(); };
+        window.logout = function() { location.reload(); };
 
-        window.handleConnect = function(expertId) {
-            const expert = EXPERTS.find(e => e.id === expertId);
-            if (state.isPremium) {
-                state.selectedExpert = expert;
-                state.modals.schedule = true;
-            } else {
-                state.modals.premium = true;
-            }
-            renderModals();
-        };
-
-        window.upgrade = function(plan) {
-            state.planType = plan;
-            state.isPremium = true;
-            state.modals.premium = false;
-            alert(`Welcome to SkillNex Premium (${plan} plan)!`);
-            renderApp();
-        };
-
-        window.confirmBooking = function() {
-            alert('Booking Confirmed! Check your email.');
-            state.modals.schedule = false;
-            state.selectedExpert = null;
-            renderModals();
-        };
-
-        window.closeModals = function() {
-            state.modals.premium = false;
-            state.modals.schedule = false;
-            state.selectedExpert = null;
-            renderModals();
-        };
-
-        window.logout = function() {
-            state = {
-                surveyCompleted: false,
-                surveyStep: 0,
-                view: 'dashboard',
-                isPremium: false,
-                planType: null,
-                isMenuOpen: false,
-                modals: { premium: false, schedule: false },
-                selectedExpert: null
-            };
-            renderApp();
-        };
-
-        // Start
         init();
-
     </script>
 </body>
 </html>
+
 
