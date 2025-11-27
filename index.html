@@ -38,11 +38,23 @@
         .modal-content::-webkit-scrollbar-track, .chat-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .modal-content::-webkit-scrollbar-thumb, .chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        /* Chat Bubble Animation */
-        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        /* Typing Animation */
+        .typing-indicator span {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background-color: #9CA3AF;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out both;
+            margin: 0 1px;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* Quick Action Scroll */
+        .quick-actions::-webkit-scrollbar { display: none; }
+        .quick-actions { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -51,6 +63,7 @@
     <div id="modal-container"></div>
     <div id="ad-container"></div>
     <div id="ai-widget-container"></div>
+    <div id="notification-container" class="fixed top-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
         // --- 1. SVG Logo ---
@@ -64,12 +77,16 @@
             <path d="M55 75 Q 60 82 70 75" stroke="#0B2545" stroke-width="7" stroke-linecap="round" fill="none"/>
         </svg>`;
 
-        // --- 2. Mock Data ---
+        // --- 2. Data ---
         const COURSES = [
-            { id: 1, platform: 'Coursera', title: 'Google Data Analytics', instructor: 'Google', rating: 4.8, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', tags: ['Data', 'Beginner'] },
-            { id: 2, platform: 'Udemy', title: 'Web Development Bootcamp', instructor: 'Angela Yu', rating: 4.9, image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80', tags: ['Web', 'Full Stack'] },
-            { id: 3, platform: 'Udacity', title: 'AI for Trading', instructor: 'Udacity', rating: 4.7, image: 'https://images.unsplash.com/photo-1611974765270-ca12588265b6?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Finance'] },
-            { id: 4, platform: 'Coursera', title: 'Machine Learning', instructor: 'Andrew Ng', rating: 4.9, image: 'https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Advanced'] }
+            { id: 1, category: 'data', platform: 'Coursera', title: 'Google Data Analytics', instructor: 'Google', rating: 4.8, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', tags: ['Data', 'Beginner'] },
+            { id: 2, category: 'web', platform: 'Udemy', title: 'Web Development Bootcamp', instructor: 'Angela Yu', rating: 4.9, image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80', tags: ['Web', 'Full Stack'] },
+            { id: 3, category: 'data', platform: 'Udacity', title: 'AI for Trading', instructor: 'Udacity', rating: 4.7, image: 'https://images.unsplash.com/photo-1611974765270-ca12588265b6?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Finance'] },
+            { id: 4, category: 'data', platform: 'Coursera', title: 'Machine Learning', instructor: 'Andrew Ng', rating: 4.9, image: 'https://images.unsplash.com/photo-1527474305487-b87b222841cc?auto=format&fit=crop&w=800&q=80', tags: ['AI', 'Advanced'] },
+            { id: 5, category: 'business', platform: 'Udacity', title: 'Digital Product Management', instructor: 'Product School', rating: 4.6, image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80', tags: ['Business', 'Leadership'] },
+            { id: 6, category: 'design', platform: 'Domestika', title: 'UX/UI Design Fundamentals', instructor: 'Michael Bierman', rating: 4.8, image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80', tags: ['Design', 'Creative'] },
+            { id: 7, category: 'web', platform: 'Coursera', title: 'React Native Specialization', instructor: 'Meta', rating: 4.7, image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80', tags: ['Mobile', 'App Dev'] },
+            { id: 8, category: 'business', platform: 'Udemy', title: 'MBA in a Box: Business Lessons', instructor: '365 Careers', rating: 4.5, image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80', tags: ['Business', 'Strategy'] }
         ];
 
         const EXPERTS = [
@@ -79,14 +96,14 @@
         ];
 
         const SURVEY_QUESTIONS = [
-            { id: 1, text: "Do you like maths & logic?", icon: "fa-calculator" },
-            { id: 2, text: "Do you enjoy leading a team?", icon: "fa-users" },
-            { id: 3, text: "Do you like building apps/websites?", icon: "fa-laptop-code" },
-            { id: 4, text: "Do you like collecting data?", icon: "fa-chart-pie" },
-            { id: 5, text: "Do you enjoy complex puzzles?", icon: "fa-puzzle-piece" },
-            { id: 6, text: "Do you like visual design?", icon: "fa-palette" },
-            { id: 7, text: "Are you comfortable speaking?", icon: "fa-microphone-alt" },
-            { id: 8, text: "Do you prefer independent work?", icon: "fa-coffee" }
+            { id: 1, text: "Do you like maths & logic?", icon: "fa-calculator", boost: 'data' },
+            { id: 2, text: "Do you enjoy leading a team?", icon: "fa-users", boost: 'business' },
+            { id: 3, text: "Do you like building apps/websites?", icon: "fa-laptop-code", boost: 'web' },
+            { id: 4, text: "Do you like collecting data?", icon: "fa-chart-pie", boost: 'data' },
+            { id: 5, text: "Do you enjoy complex puzzles?", icon: "fa-puzzle-piece", boost: 'web' },
+            { id: 6, text: "Do you like visual design?", icon: "fa-palette", boost: 'design' },
+            { id: 7, text: "Are you comfortable speaking?", icon: "fa-microphone-alt", boost: 'business' },
+            { id: 8, text: "Do you prefer independent work?", icon: "fa-coffee", boost: 'web' }
         ];
 
         const ADS = [
@@ -96,11 +113,13 @@
             { title: "Cloud Hosting Sale", desc: "Host your website for just $1/month.", color: "bg-orange-600" }
         ];
 
-        // --- 3. State Management ---
+        // --- 3. State ---
         let state = {
             introShown: false,
             surveyCompleted: false,
             surveyStep: 0,
+            surveyAnswers: [],
+            recommendedCourses: [],
             view: 'dashboard',
             isPremium: false,
             planType: null,
@@ -109,18 +128,63 @@
             modals: { premium: false, schedule: false },
             showAd: false,
             adTimerId: null,
-            // AI Agent State
             isChatOpen: false,
-            chatMessages: [{ sender: 'bot', text: 'Hi! I am the SkillNex AI. How can I help you today?' }]
+            isTyping: false,
+            chatMode: 'normal',
+            quizScore: 0,
+            quizStep: 0,
+            interviewStep: 0,
+            chatMessages: [{ sender: 'bot', text: 'Hi Alex! I am your SkillNex Assistant. Ready to boost your career?' }],
+            userEmail: ''
         };
 
-        // --- 4. Logic & Initialization ---
-        function init() {
-            renderApp();
-            renderAIWidget(); // Initial render of the closed widget
+        const QUIZ_DATA = [{ q: "What does HTML stand for?", a: "hypertext markup language" },{ q: "Which language is used for styling web pages?", a: "css" },{ q: "Is Python a compiled or interpreted language?", a: "interpreted" }];
+        const INTERVIEW_QS = ["Tell me about a time you faced a challenge at work.","Where do you see yourself in 5 years?","What is your greatest strength?"];
+
+        // --- 4. Initialization ---
+        function init() { renderApp(); renderAIWidget(); }
+
+        // --- 5. Notifications Logic ---
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            notif.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full opacity-0 flex items-center gap-3 min-w-[300px] pointer-events-auto`;
+            notif.innerHTML = `
+                <i class="fas ${iconClass} text-lg"></i>
+                <div>
+                    <p class="font-bold text-sm">${type === 'success' ? 'Success' : 'Error'}</p>
+                    <p class="text-xs opacity-90">${message}</p>
+                </div>
+            `;
+            
+            container.appendChild(notif);
+            
+            // Animate In
+            requestAnimationFrame(() => {
+                notif.classList.remove('translate-x-full', 'opacity-0');
+            });
+            
+            // Animate Out & Remove
+            setTimeout(() => {
+                notif.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => notif.remove(), 300);
+            }, 4000);
         }
 
-        // --- Ad Logic ---
+        // --- 6. Core Logic ---
+        function analyzeSurvey() {
+            let scores = { data: 0, web: 0, design: 0, business: 0 };
+            state.surveyAnswers.forEach((ans, idx) => {
+                if (ans === true) { const cat = SURVEY_QUESTIONS[idx].boost; if (cat) scores[cat] += 1; }
+            });
+            const scoredCourses = COURSES.map(c => ({ ...c, relevance: scores[c.category] || 0 }));
+            scoredCourses.sort((a, b) => b.relevance - a.relevance);
+            state.recommendedCourses = scoredCourses;
+        }
+
         function startAdLoop() {
             if (state.adTimerId) clearInterval(state.adTimerId);
             if (!state.isPremium) {
@@ -129,222 +193,118 @@
                         state.showAd = true;
                         renderAds();
                     }
-                }, 3000); // 3s
+                }, 3000); 
             }
         }
-
-        function stopAdLoop() {
-            if (state.adTimerId) { clearInterval(state.adTimerId); state.adTimerId = null; }
-            state.showAd = false;
-            renderAds();
-        }
-
+        function stopAdLoop() { if (state.adTimerId) { clearInterval(state.adTimerId); state.adTimerId = null; } state.showAd = false; renderAds(); }
         function closeAd() { state.showAd = false; renderAds(); }
 
-        // --- AI Chat Logic ---
-        function toggleChat() {
-            state.isChatOpen = !state.isChatOpen;
-            renderAIWidget();
-        }
-
-        function sendMessage() {
+        // --- 7. AI Logic ---
+        function toggleChat() { state.isChatOpen = !state.isChatOpen; renderAIWidget(); }
+        function sendMessage(optionalText) {
             const input = document.getElementById('chat-input');
-            const text = input.value.trim();
+            const text = optionalText || input.value.trim();
             if (!text) return;
-
-            // Add User Message
             state.chatMessages.push({ sender: 'user', text: text });
-            input.value = '';
+            if (input) input.value = '';
+            state.isTyping = true;
             renderAIWidget();
-            
-            // Scroll to bottom
             setTimeout(() => {
-                const scrollContainer = document.getElementById('chat-messages');
-                if(scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
-            }, 10);
-
-            // Simulate AI Delay & Response
-            setTimeout(() => {
-                const response = generateAIResponse(text);
-                state.chatMessages.push({ sender: 'bot', text: response });
+                const responseObj = processMessage(text);
+                state.isTyping = false;
+                state.chatMessages.push({ sender: 'bot', ...responseObj });
                 renderAIWidget();
-                // Scroll to bottom again
-                setTimeout(() => {
-                    const scrollContainer = document.getElementById('chat-messages');
-                    if(scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
-                }, 10);
             }, 1000);
         }
-
-        function generateAIResponse(input) {
+        function processMessage(input) {
             const lowerInput = input.toLowerCase();
-            if (lowerInput.includes('premium') || lowerInput.includes('price') || lowerInput.includes('cost')) {
-                return state.isPremium 
-                    ? "You are currently on the Premium plan. Enjoy your unlimited access!" 
-                    : "Our Premium plan is ₹99/month or ₹1099/year. It removes ads and unlocks expert mentorship.";
+            if (state.chatMode === 'quiz') {
+                const currentQ = QUIZ_DATA[state.quizStep];
+                let feedback = lowerInput.includes(currentQ.a) ? "✅ Correct!" : `❌ Incorrect. Answer: ${currentQ.a}`;
+                if (lowerInput.includes(currentQ.a)) state.quizScore++;
+                state.quizStep++;
+                if (state.quizStep < QUIZ_DATA.length) return { text: `${feedback} Next: ${QUIZ_DATA[state.quizStep].q}` };
+                else { const score = state.quizScore; state.chatMode = 'normal'; return { text: `${feedback} Quiz Done! Score: ${score}/${QUIZ_DATA.length}` }; }
             }
-            if (lowerInput.includes('course') || lowerInput.includes('learn')) {
-                return "We recommend checking the Dashboard for courses tailored to your survey results. We have great Data Science and Web Dev tracks.";
+            if (state.chatMode === 'interview') {
+                if (lowerInput.includes('stop')) { state.chatMode = 'normal'; return { text: "Interview stopped." }; }
+                state.interviewStep++;
+                if (state.interviewStep < INTERVIEW_QS.length) return { text: `Good. Next: ${INTERVIEW_QS[state.interviewStep]}` };
+                else { state.chatMode = 'normal'; return { text: "Great job! Interview complete." }; }
             }
-            if (lowerInput.includes('expert') || lowerInput.includes('mentor')) {
-                return "You can book 1-on-1 sessions with industry experts from Google, Netflix, and more in the 'Experts' tab.";
-            }
-            if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
-                return "Hello there! Ready to accelerate your career?";
-            }
-            return "I'm still learning! Try asking about 'premium', 'courses', or 'experts'.";
+            if (lowerInput.includes('quiz')) { state.chatMode = 'quiz'; state.quizStep = 0; state.quizScore = 0; return { text: `Starting Quiz! Q1: ${QUIZ_DATA[0].q}` }; }
+            if (lowerInput.includes('interview')) { state.chatMode = 'interview'; state.interviewStep = 0; return { text: `Starting Interview. Q1: ${INTERVIEW_QS[0]}` }; }
+            if (lowerInput.includes('resume')) return { text: "Tip: Use numbers to quantify success." };
+            if (lowerInput.includes('expert')) { setView('experts'); return { text: "Navigating to Experts..." }; }
+            if (lowerInput.includes('dashboard')) { setView('dashboard'); return { text: "Welcome home." }; }
+            if (lowerInput.includes('course')) return { text: "Check your Dashboard for courses." };
+            return { text: "I can help with Quizzes, Interviews, or Navigation." };
         }
 
-        // --- Render Functions ---
-
+        // --- 8. Renderers ---
         function renderApp() {
             const app = document.getElementById('app');
-            
-            if (!state.introShown) {
-                app.innerHTML = renderIntro();
-            } else if (!state.surveyCompleted) {
-                app.innerHTML = renderSurvey();
-            } else {
-                app.innerHTML = `
-                    ${renderNavbar()}
-                    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
-                        ${renderCurrentView()}
-                    </main>
-                `;
-            }
-            renderModals();
-            renderAds();
-            renderAIWidget(); // Ensure widget persists
+            if (!state.introShown) { app.innerHTML = renderIntro(); }
+            else if (!state.surveyCompleted) { app.innerHTML = renderSurvey(); }
+            else { app.innerHTML = renderNavbar() + `<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">${renderCurrentView()}</main>`; }
+            renderModals(); renderAds(); renderAIWidget(); 
         }
 
         function renderAIWidget() {
             const container = document.getElementById('ai-widget-container');
-            
-            // Don't show on intro screen
-            if (!state.introShown) {
-                container.innerHTML = '';
-                return;
-            }
-
+            if (!state.introShown) { container.innerHTML = ''; return; }
             if (!state.isChatOpen) {
-                // Closed State (FAB)
-                container.innerHTML = `
-                    <button onclick="toggleChat()" class="fixed bottom-6 right-6 w-14 h-14 bg-brand-teal text-brand-dark rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center z-50 pop-in border-2 border-brand-dark">
-                        <i class="fas fa-robot text-2xl"></i>
-                    </button>
-                `;
+                container.innerHTML = `<button onclick="toggleChat()" class="fixed bottom-6 right-6 w-14 h-14 bg-brand-teal text-brand-dark rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center z-50 pop-in border-2 border-brand-dark"><i class="fas fa-robot text-2xl"></i></button>`;
             } else {
-                // Open State (Chat Window)
                 container.innerHTML = `
-                    <div class="fixed bottom-6 right-6 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50 pop-in overflow-hidden" style="height: 500px; max-height: 80vh;">
-                        <!-- Header -->
+                    <div class="fixed bottom-6 right-6 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50 pop-in overflow-hidden" style="height: 550px; max-height: 80vh;">
                         <div class="bg-brand-dark p-4 flex justify-between items-center text-white">
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 bg-brand-teal rounded-full flex items-center justify-center text-brand-dark">
-                                    <i class="fas fa-robot text-sm"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-sm">SkillNex AI</h3>
-                                    <p class="text-[10px] text-gray-300">Online</p>
-                                </div>
-                            </div>
+                            <div class="flex items-center gap-2"><div class="w-8 h-8 bg-brand-teal rounded-full flex items-center justify-center text-brand-dark"><i class="fas fa-robot text-sm"></i></div><div><h3 class="font-bold text-sm">SkillNex AI</h3><p class="text-[10px] text-brand-teal font-bold tracking-wide uppercase">${state.chatMode === 'normal' ? 'Assistant' : state.chatMode}</p></div></div>
                             <button onclick="toggleChat()" class="text-gray-300 hover:text-white"><i class="fas fa-times"></i></button>
                         </div>
-                        
-                        <!-- Messages -->
                         <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50 chat-scroll">
-                            ${state.chatMessages.map(msg => `
-                                <div class="flex mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}">
-                                    <div class="max-w-[80%] rounded-xl p-3 text-sm ${msg.sender === 'user' ? 'bg-brand-dark text-white rounded-tr-none' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'}">
-                                        ${msg.text}
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ${state.chatMessages.map(msg => `<div class="flex mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}"><div class="max-w-[85%] rounded-xl p-3 text-sm ${msg.sender === 'user' ? 'bg-brand-dark text-white rounded-tr-none' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none shadow-sm'}">${msg.text}${msg.html ? `<div class="mt-2">${msg.html}</div>` : ''}</div></div>`).join('')}
+                            ${state.isTyping ? `<div class="flex mb-3 justify-start"><div class="bg-white border border-gray-200 rounded-xl p-3 rounded-tl-none shadow-sm"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div>` : ''}
                         </div>
-                        
-                        <!-- Input -->
+                        <div class="bg-white border-t border-gray-100 p-2 overflow-x-auto whitespace-nowrap quick-actions">
+                            <button onclick="sendMessage('Take a Quiz')" class="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium mr-2 hover:bg-indigo-100">📝 Quiz</button>
+                            <button onclick="sendMessage('Start Mock Interview')" class="inline-block px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-medium mr-2 hover:bg-teal-100">🎤 Interview</button>
+                            <button onclick="sendMessage('Resume Tips')" class="inline-block px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium hover:bg-amber-100">📄 Resume</button>
+                        </div>
                         <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
-                            <input id="chat-input" type="text" placeholder="Ask me anything..." class="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal" onkeypress="if(event.key === 'Enter') sendMessage()">
-                            <button onclick="sendMessage()" class="w-10 h-10 bg-brand-dark text-white rounded-full flex items-center justify-center hover:bg-opacity-90 transition-colors">
-                                <i class="fas fa-paper-plane text-xs"></i>
-                            </button>
+                            <input id="chat-input" type="text" placeholder="${state.chatMode === 'normal' ? 'Type a message...' : 'Type answer...'}" class="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal" onkeypress="if(event.key === 'Enter') sendMessage()">
+                            <button onclick="sendMessage()" class="w-10 h-10 bg-brand-dark text-white rounded-full flex items-center justify-center hover:bg-opacity-90 transition-colors"><i class="fas fa-paper-plane text-xs"></i></button>
                         </div>
-                    </div>
-                `;
-                // Auto scroll on render
-                setTimeout(() => {
-                    const scrollContainer = document.getElementById('chat-messages');
-                    if(scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
-                }, 0);
+                    </div>`;
+                setTimeout(() => { const sc = document.getElementById('chat-messages'); if(sc) sc.scrollTop = sc.scrollHeight; }, 0);
             }
         }
 
-        // --- Standard App Renders (Same as before) ---
+        // --- Standard Renders ---
         function renderAds() {
             const adContainer = document.getElementById('ad-container');
             if (state.showAd && !state.isPremium) {
                 const randomAd = ADS[Math.floor(Math.random() * ADS.length)];
-                adContainer.innerHTML = `
-                    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in">
-                        <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
-                            <div class="${randomAd.color} p-4 text-white text-center">
-                                <p class="text-xs uppercase font-bold tracking-widest opacity-80 mb-1">Advertisement</p>
-                                <h3 class="text-2xl font-bold">${randomAd.title}</h3>
-                            </div>
-                            <div class="p-8 text-center">
-                                <p class="text-gray-600 mb-6 text-lg">${randomAd.desc}</p>
-                                <button class="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mb-3 hover:bg-gray-800">Click Here</button>
-                                <div class="text-xs text-gray-400 mb-4">or</div>
-                                <button onclick="closeAd()" class="text-gray-500 font-medium hover:text-gray-800 underline">Close Ad</button>
-                            </div>
-                            <div class="bg-gray-50 p-3 text-center border-t border-gray-100">
-                                <p class="text-xs text-gray-500">Tired of ads? <button onclick="closeAd(); handleConnect(null)" class="text-brand-dark font-bold hover:underline">Go Premium</button></p>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                adContainer.innerHTML = `<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in"><div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative"><div class="${randomAd.color} p-4 text-white text-center"><p class="text-xs uppercase font-bold tracking-widest opacity-80 mb-1">Advertisement</p><h3 class="text-2xl font-bold">${randomAd.title}</h3></div><div class="p-8 text-center"><p class="text-gray-600 mb-6 text-lg">${randomAd.desc}</p><button class="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mb-3 hover:bg-gray-800">Click Here</button><div class="text-xs text-gray-400 mb-4">or</div><button onclick="closeAd()" class="text-gray-500 font-medium hover:text-gray-800 underline">Close Ad</button></div><div class="bg-gray-50 p-3 text-center border-t border-gray-100"><p class="text-xs text-gray-500">Tired of ads? <button onclick="closeAd(); handleConnect(null)" class="text-brand-dark font-bold hover:underline">Go Premium</button></p></div></div></div>`;
             } else { adContainer.innerHTML = ''; }
         }
 
         function renderIntro() {
-            return `<div class="min-h-screen bg-white flex flex-col fade-in">
-                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">
-                    <div class="w-32 h-32 mb-6 logo-hover">${LOGO_SVG}</div>
-                    <h1 class="text-4xl md:text-5xl font-extrabold text-brand-dark mb-6 tracking-tight leading-tight slide-up">SkillNex</h1>
-                    <p class="text-lg text-gray-500 mb-10 leading-relaxed slide-up" style="animation-delay: 0.1s">Discover your ideal career path, learn from top providers, and connect with industry leaders.</p>
-                    <button onclick="startApp()" class="w-full py-4 bg-brand-dark text-white rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 slide-up" style="animation-delay: 0.3s">Get Started <i class="fas fa-arrow-right"></i></button>
-                </div>
-            </div>`;
+            return `<div class="min-h-screen bg-white flex flex-col fade-in"><div class="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto"><div class="w-32 h-32 mb-6 logo-hover">${LOGO_SVG}</div><h1 class="text-4xl md:text-5xl font-extrabold text-brand-dark mb-6 tracking-tight leading-tight slide-up">SkillNex</h1><p class="text-lg text-gray-500 mb-10 leading-relaxed slide-up" style="animation-delay: 0.1s">Discover your ideal career path, learn from top providers, and connect with industry leaders.</p><button onclick="startApp()" class="w-full py-4 bg-brand-dark text-white rounded-xl font-bold text-lg shadow-lg hover:opacity-90 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 slide-up" style="animation-delay: 0.3s">Get Started <i class="fas fa-arrow-right"></i></button></div></div>`;
         }
-
+        
         function renderSurvey() {
-            const question = SURVEY_QUESTIONS[state.surveyStep];
-            const progress = ((state.surveyStep + 1) / SURVEY_QUESTIONS.length) * 100;
-            return `<div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center p-4 fade-in">
-                <div class="bg-white max-w-lg w-full rounded-2xl shadow-xl p-8 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-gray-100"><div class="h-full bg-brand-dark transition-all duration-500 ease-out" style="width: ${progress}%"></div></div>
-                    <div class="mt-6 text-center">
-                        <div class="flex justify-center text-brand-teal mb-4"><i class="fas ${question.icon} text-4xl"></i></div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-8 min-h-[64px] flex items-center justify-center">${question.text}</h2>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button onclick="handleSurveyAnswer(true)" class="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-gray-100 hover:border-green-500 hover:bg-green-50 transition-all group"><i class="fas fa-thumbs-up text-2xl text-gray-400 group-hover:text-green-500 mb-2 transition-colors"></i><span class="font-bold text-gray-700 group-hover:text-green-700">Yes</span></button>
-                            <button onclick="handleSurveyAnswer(false)" class="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-gray-100 hover:border-red-500 hover:bg-red-50 transition-all group"><i class="fas fa-thumbs-down text-2xl text-gray-400 group-hover:text-red-500 mb-2 transition-colors"></i><span class="font-bold text-gray-700 group-hover:text-red-700">No</span></button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+            const q = SURVEY_QUESTIONS[state.surveyStep];
+            const p = ((state.surveyStep + 1) / SURVEY_QUESTIONS.length) * 100;
+            return `<div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center p-4 fade-in"><div class="bg-white max-w-lg w-full rounded-2xl shadow-xl p-8 relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-2 bg-gray-100"><div class="h-full bg-brand-dark transition-all duration-500 ease-out" style="width: ${p}%"></div></div><div class="mt-6 text-center"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 text-brand-dark mb-6"><span class="text-2xl font-bold">${state.surveyStep + 1}</span></div><div class="flex justify-center text-brand-teal mb-4"><i class="fas ${q.icon} text-4xl"></i></div><h2 class="text-2xl font-bold text-gray-900 mb-8 min-h-[64px] flex items-center justify-center">${q.text}</h2><div class="grid grid-cols-2 gap-4"><button onclick="handleSurveyAnswer(true)" class="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-gray-100 hover:border-green-500 hover:bg-green-50 transition-all group"><i class="fas fa-thumbs-up text-2xl text-gray-400 group-hover:text-green-500 mb-2 transition-colors"></i><span class="font-bold text-gray-700 group-hover:text-green-700">Yes</span></button><button onclick="handleSurveyAnswer(false)" class="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-gray-100 hover:border-red-500 hover:bg-red-50 transition-all group"><i class="fas fa-thumbs-down text-2xl text-gray-400 group-hover:text-red-500 mb-2 transition-colors"></i><span class="font-bold text-gray-700 group-hover:text-red-700">No</span></button></div></div></div></div>`;
         }
 
         function renderNavbar() {
-            return `<nav class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2 cursor-pointer" onclick="setView('dashboard')"><div class="w-8 h-8">${LOGO_SVG}</div><span class="text-xl font-bold tracking-tight text-brand-dark">SkillNex</span></div>
-                <div class="relative"><button onclick="toggleMenu()" class="flex items-center gap-2 p-1 pr-3 rounded-full border border-gray-200 hover:shadow-md transition-all"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" class="w-8 h-8 rounded-full object-cover" /><div class="hidden md:block text-left"><p class="text-xs font-bold text-gray-700">Alex Doe</p><p class="text-[10px] font-medium text-brand-teal uppercase">${state.isPremium ? 'Premium' : 'Free Plan'}</p></div><i class="fas fa-bars text-gray-500 ml-1"></i></button>${state.isMenuOpen ? `<div class="fixed inset-0 z-30" onclick="toggleMenu()"></div><div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-40">${renderMenuItem('fa-book-reader', 'My Progress', 'progress')}${renderMenuItem('fa-users', 'Experts', 'experts')}${renderMenuItem('fa-credit-card', 'Subscription', 'subscription')}<button onclick="alert('Copied!'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"><i class="fas fa-share-alt w-6 opacity-70"></i> Refer Now</button><div class="h-px bg-gray-100 my-2"></div><button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-6 opacity-70"></i> Log Out</button></div>` : ''}</div></div></div></nav>`;
+            return `<nav class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex justify-between h-16 items-center"><div class="flex items-center gap-2 cursor-pointer" onclick="setView('dashboard')"><div class="w-8 h-8">${LOGO_SVG}</div><span class="text-xl font-bold tracking-tight text-brand-dark">SkillNex</span></div><div class="relative"><button onclick="toggleMenu()" class="flex items-center gap-2 p-1 pr-3 rounded-full border border-gray-200 hover:shadow-md transition-all"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" class="w-8 h-8 rounded-full object-cover" /><div class="hidden md:block text-left"><p class="text-xs font-bold text-gray-700">Alex Doe</p><p class="text-[10px] font-medium text-brand-teal uppercase">${state.isPremium ? 'Premium' : 'Free Plan'}</p></div><i class="fas fa-bars text-gray-500 ml-1"></i></button>${state.isMenuOpen ? `<div class="fixed inset-0 z-30" onclick="toggleMenu()"></div><div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-40">${renderMenuItem('fa-book-reader', 'My Progress', 'progress')}${renderMenuItem('fa-users', 'Experts', 'experts')}${renderMenuItem('fa-credit-card', 'Subscription', 'subscription')}<button onclick="alert('Copied!'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"><i class="fas fa-share-alt w-6 opacity-70"></i> Refer Now</button><div class="h-px bg-gray-100 my-2"></div><button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-6 opacity-70"></i> Log Out</button></div>` : ''}</div></div></div></nav>`;
         }
-
         function renderMenuItem(icon, label, viewName) { return `<button onclick="setView('${viewName}'); toggleMenu()" class="w-full flex items-center px-4 py-3 text-sm font-medium transition-colors ${state.view === viewName ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-50'}"><i class="fas ${icon} w-6 opacity-70"></i> ${label}</button>`; }
-
         function renderCurrentView() {
-            if(state.view === 'dashboard') return `<div class="flex justify-between items-end mb-6"><div><h1 class="text-3xl font-bold text-gray-900">Recommended for You</h1><p class="text-gray-500 mt-1">Based on your survey results</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${COURSES.map(c => `<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"><div class="relative h-48 overflow-hidden"><img src="${c.image}" class="w-full h-full object-cover" /><div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-dark uppercase tracking-wide shadow-sm">${c.platform}</div></div><div class="p-5"><h3 class="font-bold text-gray-900 mb-2 h-12 line-clamp-2">${c.title}</h3><div class="flex items-center justify-between"><div class="flex items-center text-amber-400 text-sm font-bold"><i class="fas fa-star mr-1"></i> ${c.rating}</div><button class="text-brand-dark text-sm font-medium">View</button></div></div></div>`).join('')}</div><div class="mt-12 bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl p-8 text-white"><h2 class="text-2xl font-bold mb-2">Accelerate your career</h2><p class="text-gray-300 mb-6">Get 1-on-1 guidance from experts.</p><button onclick="setView('experts')" class="bg-white text-brand-dark px-6 py-2 rounded-lg font-medium">Find a Mentor</button></div>`;
+            if(state.view === 'dashboard') return `<div class="flex justify-between items-end mb-6"><div><h1 class="text-3xl font-bold text-gray-900">Top Matches for You</h1><p class="text-gray-500 mt-1">Courses sorted by your survey results</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${state.recommendedCourses.map(c => `<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"><div class="relative h-48 overflow-hidden"><img src="${c.image}" class="w-full h-full object-cover" /><div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-dark uppercase tracking-wide shadow-sm">${c.platform}</div></div><div class="p-5"><div class="flex justify-between items-center mb-2"><h3 class="font-bold text-gray-900 h-12 line-clamp-2">${c.title}</h3>${c.relevance > 0 ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Match</span>' : ''}</div><div class="flex items-center justify-between"><div class="flex items-center text-amber-400 text-sm font-bold"><i class="fas fa-star mr-1"></i> ${c.rating}</div><button class="text-brand-dark text-sm font-medium">View</button></div></div></div>`).join('')}</div><div class="mt-12 bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl p-8 text-white"><h2 class="text-2xl font-bold mb-2">Accelerate your career</h2><p class="text-gray-300 mb-6">Get 1-on-1 guidance from experts.</p><button onclick="setView('experts')" class="bg-white text-brand-dark px-6 py-2 rounded-lg font-medium">Find a Mentor</button></div>`;
             if(state.view === 'experts') return `<div class="text-center max-w-2xl mx-auto mb-10"><h2 class="text-3xl font-bold text-gray-900 mb-3">Industry Experts</h2><p class="text-gray-500">Book 1-on-1 sessions.</p></div><div class="grid grid-cols-1 md:grid-cols-3 gap-8">${EXPERTS.map(e => `<div class="bg-white rounded-xl shadow-sm border p-6 text-center"><img src="${e.image}" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-gray-100" /><h3 class="text-xl font-bold">${e.name}</h3><p class="text-brand-teal font-medium mb-1">${e.role}</p><button onclick="handleConnect(${e.id})" class="w-full px-4 py-2 rounded-lg font-medium mt-4 ${state.isPremium ? 'bg-brand-dark text-white' : 'border border-gray-200'}">${state.isPremium ? 'Schedule' : 'Connect'}</button></div>`).join('')}</div>`;
             if(state.view === 'subscription') return `<div class="max-w-6xl mx-auto"><div class="text-center mb-10"><h2 class="text-3xl font-bold">Plans</h2></div><div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-2xl border shadow-sm"><h3 class="text-xl font-bold">Free</h3><p class="text-3xl font-bold mt-4 mb-6">₹0</p><button disabled class="w-full border rounded-lg py-2 opacity-50">Current</button></div><div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md"><h3 class="text-xl font-bold text-brand-dark">Monthly</h3><p class="text-3xl font-bold mt-4 mb-6">₹99/mo</p><button onclick="upgrade('monthly')" class="w-full bg-brand-dark text-white rounded-lg py-2">Subscribe</button></div><div class="bg-white p-6 rounded-2xl border-2 border-brand-teal shadow-xl"><h3 class="text-xl font-bold">Annual</h3><p class="text-3xl font-bold mt-4 mb-6">₹1099/yr</p><button onclick="upgrade('yearly')" class="w-full bg-brand-teal text-white rounded-lg py-2">Subscribe</button></div></div></div>`;
             return `<div class="max-w-3xl mx-auto"><h2 class="text-2xl font-bold mb-6">Progress</h2><div class="bg-white rounded-xl shadow-sm border p-6"><div class="flex justify-between mb-4"><h3>Web Dev</h3><span class="font-bold text-brand-dark">75%</span></div><div class="bg-gray-100 rounded-full h-3"><div class="bg-brand-dark h-3 rounded-full" style="width:75%"></div></div></div></div>`;
@@ -352,19 +312,110 @@
 
         function renderModals() {
             const mc = document.getElementById('modal-container');
-            if (state.modals.premium) { mc.innerHTML = `<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 fade-in"><div class="bg-white rounded-2xl p-6 text-center max-w-sm"><i class="fas fa-award text-3xl text-amber-500 mb-4"></i><h4 class="text-xl font-bold mb-2">Go Premium</h4><p class="mb-6 text-gray-500">Remove ads & unlock experts.</p><div class="grid grid-cols-2 gap-3"><button onclick="upgrade('monthly')" class="border p-3 rounded-xl font-bold">Monthly ₹99</button><button onclick="upgrade('yearly')" class="bg-brand-teal text-white p-3 rounded-xl font-bold">Yearly ₹1099</button></div><button onclick="closeModals()" class="mt-4 text-gray-400">Close</button></div></div>`; }
-            else if (state.modals.schedule) { mc.innerHTML = `<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 fade-in"><div class="bg-white rounded-2xl p-6 text-center max-w-sm"><h4 class="text-xl font-bold mb-4">Book Session</h4><button onclick="confirmBooking()" class="w-full bg-brand-dark text-white py-2 rounded-lg">Confirm</button><button onclick="closeModals()" class="mt-4 text-gray-400">Cancel</button></div></div>`; }
+            if (state.modals.premium) { 
+                mc.innerHTML = `<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 fade-in"><div class="bg-white rounded-2xl p-6 text-center max-w-sm"><i class="fas fa-award text-3xl text-amber-500 mb-4"></i><h4 class="text-xl font-bold mb-2">Go Premium</h4><p class="mb-6 text-gray-500">Remove ads & unlock experts.</p><div class="grid grid-cols-2 gap-3"><button onclick="upgrade('monthly')" class="border p-3 rounded-xl font-bold">Monthly ₹99</button><button onclick="upgrade('yearly')" class="bg-brand-teal text-white p-3 rounded-xl font-bold">Yearly ₹1099</button></div><button onclick="closeModals()" class="mt-4 text-gray-400">Close</button></div></div>`; 
+            }
+            else if (state.modals.schedule && state.selectedExpert) { 
+                // Updated Modal with Email Input
+                mc.innerHTML = `
+                    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 fade-in">
+                        <div class="bg-white rounded-2xl p-6 text-center max-w-sm w-full">
+                            <h4 class="text-xl font-bold mb-1">Book with ${state.selectedExpert.name}</h4>
+                            <p class="text-xs text-gray-500 mb-4">Enter your email to receive the invite.</p>
+                            
+                            <input id="booking-email" type="email" placeholder="your@email.com" class="w-full mb-4 p-2 border rounded-lg text-sm" value="${state.userEmail}" onchange="state.userEmail = this.value">
+                            
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <button class="p-2 border rounded-lg text-xs hover:border-brand-teal">10:00 AM</button>
+                                <button class="p-2 border rounded-lg text-xs hover:border-brand-teal">02:00 PM</button>
+                                <button class="p-2 border rounded-lg text-xs hover:border-brand-teal">04:30 PM</button>
+                            </div>
+                            
+                            <button id="btn-confirm" onclick="confirmBooking()" class="w-full bg-brand-dark text-white py-2 rounded-lg flex items-center justify-center gap-2">
+                                <span>Confirm Booking</span>
+                            </button>
+                            <button onclick="closeModals()" class="mt-4 text-gray-400 text-sm">Cancel</button>
+                        </div>
+                    </div>`; 
+            }
             else { mc.innerHTML = ''; }
         }
 
-        // --- Actions ---
+        // --- 9. Actions ---
         window.startApp = function() { state.introShown = true; renderApp(); renderAIWidget(); };
-        window.handleSurveyAnswer = function(ans) { if (state.surveyStep < SURVEY_QUESTIONS.length - 1) { state.surveyStep++; renderApp(); } else { state.surveyCompleted = true; state.view = 'dashboard'; renderApp(); startAdLoop(); } };
+        window.handleSurveyAnswer = function(ans) { 
+            state.surveyAnswers.push(ans);
+            if (state.surveyStep < SURVEY_QUESTIONS.length - 1) { 
+                state.surveyStep++; 
+                renderApp(); 
+            } else { 
+                state.surveyCompleted = true; 
+                analyzeSurvey(); 
+                state.view = 'dashboard'; 
+                renderApp(); 
+                startAdLoop(); 
+            } 
+        };
         window.setView = function(v) { state.view = v; state.isMenuOpen = false; renderApp(); };
         window.toggleMenu = function() { state.isMenuOpen = !state.isMenuOpen; renderApp(); };
         window.handleConnect = function(id) { if (id === null) { state.modals.premium = true; renderModals(); return; } const exp = EXPERTS.find(e => e.id === id); if (state.isPremium) { state.selectedExpert = exp; state.modals.schedule = true; } else { state.modals.premium = true; } renderModals(); };
         window.upgrade = function(p) { state.planType = p; state.isPremium = true; state.modals.premium = false; stopAdLoop(); alert('Premium Active! Ads removed.'); renderApp(); };
-        window.confirmBooking = function() { alert('Booked!'); closeModals(); };
+        
+        // --- Enhanced Confirm Booking ---
+        window.confirmBooking = function() {
+            const emailInput = document.getElementById('booking-email');
+            if (!emailInput.value.includes('@')) {
+                showNotification("Please enter a valid email.", "error");
+                return;
+            }
+            
+            // 1. Loading State
+            const btn = document.getElementById('btn-confirm');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Invite...';
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
+
+            // 2. Simulate API & Email Send
+            setTimeout(() => {
+                showNotification(`📧 Sending confirmation to ${emailInput.value}...`, 'success');
+                
+                // 3. Download Calendar Invite (The "Real" Send)
+                downloadICS(state.selectedExpert.name);
+                
+                setTimeout(() => {
+                    closeModals();
+                    showNotification(`✅ Booking confirmed! Check your calendar.`, 'success');
+                }, 1500);
+            }, 1000);
+        };
+
+        // --- Calendar Helper ---
+        function downloadICS(expertName) {
+            const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            const content = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//SkillNex//Booking//EN
+BEGIN:VEVENT
+UID:${now}-${expertName.replace(/\s/g,'')}@skillnex.com
+DTSTAMP:${now}
+DTSTART:${now}
+DTEND:${now}
+SUMMARY:Mentorship Session with ${expertName}
+DESCRIPTION:Career advice session booked via SkillNex.
+LOCATION:Google Meet
+END:VEVENT
+END:VCALENDAR`;
+            
+            const blob = new Blob([content], { type: 'text/calendar' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SkillNex_Booking_${expertName.replace(/\s/g,'_')}.ics`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         window.closeModals = function() { state.modals.premium = false; state.modals.schedule = false; renderModals(); };
         window.closeAd = function() { state.showAd = false; renderAds(); };
         window.logout = function() { location.reload(); };
